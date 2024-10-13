@@ -4,10 +4,14 @@
  * Author:  J.
  * Email:   jaime.gomez@usach.cl
  * Project: goHttpUploadServer - Drone FrameWork
- * Build: go build -ldflags "-s -w" main.go
- * Docker:
+ * Build Win: go build -ldflags "-s -w" main.go
+ * Build Linux: GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o main main.go
+ * Docker Windows:
  * 		docker build --platform windows -t uploadserver .
  *		docker run --platform windows -p 3333:3333 uploadserver
+ * Docker Linux:
+ *		docker build -t uploadserver .
+ *		docker run --name uploadserver -p 3333:3333 uploadserver
  */
 
 package main
@@ -22,7 +26,8 @@ import (
 	"path/filepath"
 )
 
-const uploadDir = `C:\uploads`
+// const uploadDir = `C:\uploads`
+const uploadDir = `./uploads`
 
 func main() {
 	mux := http.NewServeMux()
