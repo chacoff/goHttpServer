@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DroneOperations LPL - Upload Files</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .upload-container {
+            text-align: center;
+            width: 283px;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .upload-label {
+            font-size: 24px;
+            color: #666;
+        }
+
+        .upload-button input[type="file"] {
+            display: none;
+        }
+
+        .upload-button {
+            background-color: darkorange;
+            color: white;
+            font-size: 30px;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-button:hover {
+            background-color: #ffb84d;
+        }
+
+        .upload-button:active {
+            background-color: #e69500;
+        }
+
+        .folder-option {
+            margin-top: 15px;
+            text-align: left;
+        }
+
+        .folder-input {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .folder-input input {
+            width: 84%;
+            padding: 18px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        /* Style for displaying selected files */
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            text-align: left;
+        }
+
+        .file-list li {
+            font-size: 12px;
+            color: #666;
+            margin: 5px 0; /* Space between file names */
+            white-space: nowrap; /* Prevent line breaks */
+            overflow: hidden; /* Hide overflow */
+            text-overflow: ellipsis; /* Show ellipsis for overflowing text */
+            width: 100%; /* Use the full width of the container */
+        }
+
+        .progress-container {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            background-color: #ddd;
+            height: 20px;
+            border-radius: 5px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 0;
+            background-color: #4caf50;
+            border-radius: 5px;
+            transition: width 0.4s;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4caf50;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 10px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            display: none;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .success-message a {
+            color: darkorange;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .success-message a:hover {
+            color: orange;
+        }
+
+        /* Upload button */
+        #uploadButton {
+            display: none;
+            margin-top: 20px;
+            padding: 18px;
+            background-color: darkorange;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            align-self: flex-end;
+        }
+
+        #uploadButton:hover {
+            background-color: #ffb84d;
+        }
+
+        #uploadButton:active {
+            background-color: #e69500;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="upload-container">
+    <img alt="drone photo" src="droncito.png" height="83"/>
+    <p class="upload-label">Choose Photos</p>
+    <form id="uploadForm" action="/upload" method="POST" enctype="multipart/form-data">
+        <label class="upload-button">
+            <span>+</span>
+            <input type="file" name="photos" accept="image/*" multiple onchange="handleFiles()">
+        </label>
+
+        <!-- File list display -->
+        <ul class="file-list" id="fileList"></ul>
+
+        <!-- Folder creation option -->
+        <div class="folder-option">
+            <input type="checkbox" id="createFolderCheckbox" onclick="toggleFolderInput()">
+            <label for="createFolderCheckbox">Create Folder</label>
+        </div>
+
+        <!-- Folder name input, hidden by default -->
+        <div class="folder-input" id="folderInput">
+            <input type="text" id="folderName" name="folderName" placeholder="Enter folder name">
+        </div>
+
+
+
+        <!-- Upload button -->
+        <button type="button" id="uploadButton" onclick="uploadFiles()">Go</button>
+    </form>
+
+    <!-- Progress and status indicators -->
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div class="progress-bar-fill"></div>
+        </div>
+        <div class="loading-spinner"></div>
+        <p class="success-message">Files uploaded successfully! <br />
+            <a href="./">another one?</a>
+        </p>
+    </div>
+</div>
+
+<script>
+    const maxFileSize = 4 * 1024 * 1024 * 1024;  // 4GB limit
+    const maxFilesToShow = 10;  // Limit to show 10 files
+
+    function toggleFolderInput() {
+        const checkbox = document.getElementById('createFolderCheckbox');
+        const folderInput = document.getElementById('folderInput');
+
+        folderInput.style.display = checkbox.checked ? 'block' : 'none';
+    }
+
+    function handleFiles() {
+        const input = document.querySelector('input[type="file"]');
+        const fileList = document.getElementById('fileList');
+        const uploadButton = document.getElementById('uploadButton');
+        const files = input.files;
+
+        // Clear the existing list and hide the button initially
+        fileList.innerHTML = '';
+        uploadButton.style.display = 'none';
+
+        if (files.length > 0) {
+            let totalSize = 0;
+            let filesToShow = [];
+
+            // Display files and check size
+            for (let i = 0; i < files.length; i++) {
+                totalSize += files[i].size;
+
+                if (totalSize > maxFileSize) {
+                    alert('Total file size exceeds the 4GB limit!');
+                    return;
+                }
+
+                if (filesToShow.length < maxFilesToShow) {
+                    filesToShow.push(`<li>${files[i].name}</li>`);
+                }
+            }
+
+            // Add "..." if more than 10 files
+            if (files.length > maxFilesToShow) {
+                filesToShow.push(`<li>... and ${files.length - maxFilesToShow} more files</li>`);
+            }
+
+            fileList.innerHTML = filesToShow.join('');
+            uploadButton.style.display = 'block';  // Show the upload button
+        }
+    }
+
+    function uploadFiles() {
+        const form = document.getElementById('uploadForm');
+        const formData = new FormData(form);
+        const progressBarFill = document.querySelector('.progress-bar-fill');
+        const progressContainer = document.querySelector('.progress-container');
+        const spinner = document.querySelector('.loading-spinner');
+        const successMessage = document.querySelector('.success-message');
+
+        // Reset previous progress and state
+        progressBarFill.style.width = '0';
+        progressContainer.style.display = 'block';
+        spinner.style.display = 'block';
+        successMessage.style.display = 'none';
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/upload', true);
+
+        // Update the progress bar
+        xhr.upload.onprogress = function(event) {
+            if (event.lengthComputable) {
+                const percentComplete = (event.loaded / event.total) * 100;
+                progressBarFill.style.width = percentComplete + '%';
+            }
+        };
+
+        // When the upload is complete
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                spinner.style.display = 'none';
+                successMessage.style.display = 'block';
+            } else {
+                alert('Error uploading files.');
+                spinner.style.display = 'none';
+            }
+        };
+
+        // Send the form data (files and folder name if applicable)
+        xhr.send(formData);
+    }
+</script>
+</body>
+</html>
