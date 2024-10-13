@@ -13,7 +13,6 @@
 
 FROM alpine:latest
 WORKDIR /uploadserver
-COPY . ./uploadserver
-RUN file uploadserver/main
+COPY . .
 EXPOSE 3333
-ENTRYPOINT ["./uploadserver/main"]
+ENTRYPOINT ["./main"]
