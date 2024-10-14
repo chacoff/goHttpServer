@@ -5,18 +5,23 @@
  * Email:   jaime.gomez@usach.cl
  * Project: goHttpUploadServer - Drone FrameWork
  *
- * Build Win: go build -ldflags "-s -w" main.go
+ * Build Win:
+ * 		go build -ldflags "-s -w" main.go
  *
- * Build Linux: CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o main main.go
+ * Build Linux:
+ * 		CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -o main main.go
  *
  * Do not forget to create c:/uploads/ under the host
  *
  * Docker Linux with WSL:
  *		docker build -t uploadserver .
- *		docker run -it --entrypoint /bin/sh uploadserver
+ * 		docker run --name uploadserver -p 3333:3333 -v /mnt/c/uploads:/uploadserver/uploads uploadserver
+ *
+ * Docker testing after build:
+ * 		docker run -it --entrypoint /bin/sh uploadserver
  *		ls -l
  *		./main
- *		docker run --name uploadserver -p 3333:3333 -v /mnt/c/uploads:/uploadserver/uploads uploadserver
+ *
  */
 
 package main
