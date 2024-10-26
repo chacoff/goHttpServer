@@ -18,6 +18,7 @@
  * 		docker run --name uploadserver -p 3333:3333 -v /mnt/c/uploads:/uploadserver/uploads uploadserver
  *
  * Docker testing after build:
+ *		docker exec -it uploadserver sh
  * 		docker run -it --entrypoint /bin/sh uploadserver
  *		ls -l
  *		./main
