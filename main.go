@@ -30,6 +30,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -46,6 +47,8 @@ func main() {
 	mux.Handle("/", http.FileServer(http.Dir("./public")))
 	mux.HandleFunc("/hello", getHello)
 	mux.HandleFunc("/upload", uploadFiles)
+	mux.HandleFunc("/explore", exploreFiles)
+	mux.HandleFunc("/images/", serveImage)
 
 	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
 		fmt.Printf("Folder %s does not exist. It will be created\n", uploadDir)
@@ -143,4 +146,30 @@ func uploadFiles(w http.ResponseWriter, r *http.Request) {
 
 	// Respond with a success message
 	fmt.Fprintf(w, "Files uploaded successfully!")
+}
+
+func exploreFiles(w http.ResponseWriter, r *http.Request) {
+	files, err := os.ReadDir(uploadDir)
+	if err != nil {
+		http.Error(w, "Error reading directory", http.StatusInternalServerError)
+		return
+	}
+
+	var images []string
+	for _, file := range files {
+		if !file.IsDir() {
+			images = append(images, file.Name())
+		}
+	}
+
+	tmpl := template.Must(template.ParseFiles("public/explore.html"))
+	errP := tmpl.Execute(w, struct{ Images []string }{images})
+	if errP != nil {
+		fmt.Println("error execution")
+	}
+}
+
+func serveImage(w http.ResponseWriter, r *http.Request) {
+	filename := filepath.Base(r.URL.Path)
+	http.ServeFile(w, r, filepath.Join(uploadDir, filename))
 }
